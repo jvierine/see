@@ -18,8 +18,10 @@ class see_config:
                      "fstep":"3.125e3",
                      "f0":"3.9e6",
                      "nfft":"262144",
-                     "ch":'["chc","chd"]',
+                     "ch":'["chc"]',
                      "offset":"1530",
+                     "fscale":'"Hz"',
+                     "fast":"false",                     
                      "fmin":"-5e3",
                      "fmax":"5e3"}
 
@@ -43,6 +45,8 @@ class see_config:
         self.offset=int(json.loads(c["config"]["offset"]))
         self.f0=float(json.loads(c["config"]["f0"]))
         self.fstep=float(json.loads(c["config"]["fstep"]))
+        self.fscale=json.loads(c["config"]["fscale"])
+        self.fast=bool(json.loads(c["config"]["fast"]))
 
     def __str__(self):
         out="Configuration\n"

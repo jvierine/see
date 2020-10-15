@@ -10,7 +10,7 @@ import time
 import os
 
 #dnames=["/data0/2020.03.26/test1e6_4.04e6","/data1/2020.03.26/test1e6_4.04e6"]
-dnames=["/data0/2020.06.25/test1e6_4.04e6","/data1/2020.06.25/test1e6_4.04e6"]
+dnames=["/data0/2020.10.15/test1e6_4.04e6","/data1/2020.10.15/test1e6_4.04e6"]
 #dnames=["/data0/2019.11.25/test1e6_2.7e6","/data1/2019.11.25/test1e6_2.7e6"]
 f=re.search(".*_(.*)",dnames[0]).group(1)
 print(f)
@@ -147,7 +147,7 @@ def realtime_updates():
     plt.figure(figsize=(15,10))
 #    while True:
 #       xc_rt(dt=10,n_avg=4,plot_phase=False,fft_len=1024,realtime=True,flim=[3.9,4.4])
-    xc_rt(dt=2*60,n_avg=8,fft_len=2*2*2*1024,plot_phase=False,realtime=True,flim=[3.7,4.4])        
+    xc_rt(dt=5*60,n_avg=8,fft_len=2*2*2*1024,plot_phase=False,realtime=True,flim=[3.7,4.4])        
     #time.sleep(10)
         
 realtime_updates()

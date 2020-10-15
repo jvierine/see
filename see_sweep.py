@@ -23,12 +23,16 @@ def calculate_sweep(conf,d):
     step_len=conf.step_len*conf.sample_rate
     t=n.arange(nfft,dtype=n.float32)/conf.sample_rate
 
-    wfun=s.chebwin(nfft,200)
+    wfun=s.chebwin(nfft,150)
 
     S=n.zeros([conf.nsteps,n_freq])
 
     overlap=nfft/2
-    n_avg=n.min([10,int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))])
+    nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))
+    if conf.fast:
+        n_avg=n.min([10,nmax_avg])
+    else:
+        n_avg=nmax_avg
     
     tvec=n.zeros(conf.nsteps)
     carrier = n.zeros(conf.nsteps,dtype=n.complex64)
@@ -41,20 +45,9 @@ def calculate_sweep(conf,d):
             for avg_i in range(n_avg):
                 inow=i0+step_idx*step_len + avg_i*overlap
                 tvec[step_idx]=step_idx*step_len/conf.sample_rate
-                print(stuffr.unix2datestr(inow/conf.sample_rate))
-
+                print("%s n_avg %d"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg))
                 z=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])
- #               df=n.angle(n.mean(z[0:(len(z)-1000)]*n.conj(z[1000:len(z)])))
-#                print(df)
-#                z=z*n.exp(1j*n.arange(len(z))*df/1000.0)
-      #          zd=stuffr.decimate(z,dec=1000)
-     #           plt.plot(zd.real)
-       #         plt.plot(zd.imag)
-        #        plt.show()
-#                z=z-n.mean(z)
                 X=n.fft.fftshift(n.fft.fft(wfun*z))
-                print(len(X))
-                print(len(fidx))
                 S[step_idx,:]+=n.abs(X[fidx])**2.0
 
                 carrier[step_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
@@ -65,15 +58,30 @@ def calculate_sweep(conf,d):
         #plt.show()
     dB=10.0*n.log10(S)
     dB=dB-n.nanmedian(dB)
-    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=-3,vmax=70.0)
+    
+    if conf.fscale == "kHz":
+        fvec=fvec/1e3
+        
+    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=-3,vmax=60.0)
     plt.xlabel("Time (s)")
-    plt.ylabel("Frequency (Hz)")
+    if conf.fscale == "kHz":
+        plt.ylabel("Frequency (kHz)")
+        plt.ylim([conf.fmin/1e3,conf.fmax/1e3])        
+    else:
+        plt.ylabel("Frequency (Hz)")
+        plt.ylim([conf.fmin,conf.fmax])        
+        
     cb=plt.colorbar()
     cb.set_label("dB")
+
+    plt.title("Cycle start %s"%(stuffr.unix2datestr(conf.t0)))
     plt.show()
+    
     plt.plot(tvec,10.0*n.log10(carrier))
+    
     plt.xlabel("Time (s)")
     plt.ylabel("Carrier power (dB)")
+    plt.savefig("img/wb_sweep_%1.2f.png"%(conf.t0))
     plt.show()
 
 if __name__ == "__main__":
@@ -83,7 +91,6 @@ if __name__ == "__main__":
         conf=sc.see_config()
 
     print(conf)
-
 
     d=drf.DigitalRFReader(conf.data_dirs)
     print("Channels")

@@ -21,3 +21,4 @@ nohup thor.py -m 192.168.10.3 -d "A:A A:B" -c cha,chb -f $freq -r $rate ${dir0} 
 nohup thor.py -m 192.168.10.4 -d "A:A A:B" -c chc,chd -f $freq -r $rate ${dir0}  > log.4 2>&1 &
 nohup thor.py -m 192.168.10.5 -d "A:A A:B" -c che,chf -f $freq -r $rate ${dir1}  > log.5 2>&1 &
 nohup thor.py -m 192.168.10.6 -d "A:A A:B" -c chg,chh -f $freq -r $rate ${dir1}  > log.6 2>&1 &
+
