@@ -27,6 +27,7 @@ class see_config:
                      "debug_timing":"false",
                      "show_plot":"true",
                      "fmin":"-5e3",
+                     "prefix":'"wb"',
                      "n_cycles":"1",
                      "fmax":"5e3"}
 
@@ -56,6 +57,7 @@ class see_config:
         self.show_plot=bool(json.loads(c["config"]["show_plot"]))
         self.n_avg=int(json.loads(c["config"]["n_avg"]))
         self.n_cycles=int(json.loads(c["config"]["n_cycles"]))
+        self.prefix=json.loads(c["config"]["prefix"])
         self.debug_timing=bool(json.loads(c["config"]["debug_timing"]))                
 
     def __str__(self):
