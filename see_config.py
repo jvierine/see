@@ -21,8 +21,12 @@ class see_config:
                      "ch":'["chc"]',
                      "offset":"1530",
                      "fscale":'"Hz"',
-                     "fast":"false",                     
+                     "fast":"false",
+                     "n_avg":'"1"',
+                     "debug":"false",
+                     "debug_timing":"false",                     
                      "fmin":"-5e3",
+                     "n_cycles":"1",
                      "fmax":"5e3"}
 
         if fname != None:
@@ -47,6 +51,10 @@ class see_config:
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
+        self.debug=bool(json.loads(c["config"]["debug"]))
+        self.n_avg=int(json.loads(c["config"]["n_avg"]))
+        self.n_cycles=int(json.loads(c["config"]["n_cycles"]))
+        self.debug_timing=bool(json.loads(c["config"]["debug_timing"]))                
 
     def __str__(self):
         out="Configuration\n"

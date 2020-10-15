@@ -10,15 +10,23 @@ import see_config as sc
 import stuffr
 import os
 
+def debug_start(conf,d):
+    for i in range(30):
+        z=d.read_vector_c81d(conf.t0*conf.sample_rate+conf.offset+i*conf.step_len,conf.step_len*conf.sample_rate,conf.ch[0])
+        plt.plot(stuffr.decimate(n.abs(z)**2.0,dec=100))
+        plt.title(i)
+        plt.show()
+        plt.plot(n.fft.fftshift(n.fft.fftfreq(1000000,d=1/conf.sample_rate))/1e6,10.0*n.log10(n.fft.fftshift(n.abs(n.fft.fft(z[0:1000000]))**2.0)))
+        plt.show()
 
-def calculate_sweep(conf,d):
+def calculate_sweep(conf,d,i0):
     fvec=n.fft.fftshift(n.fft.fftfreq(conf.nfft,d=1.0/conf.sample_rate))
     fidx=n.where( (fvec>conf.fmin)&(fvec<conf.fmax))[0]
 
     carrier_fidx=n.where( (fvec>-10.0)&(fvec<10.0))[0]
     
     n_freq=len(fidx)
-    i0=conf.t0*conf.sample_rate + conf.offset
+    
     nfft=conf.nfft
     step_len=conf.step_len*conf.sample_rate
     t=n.arange(nfft,dtype=n.float32)/conf.sample_rate
@@ -27,10 +35,11 @@ def calculate_sweep(conf,d):
 
     S=n.zeros([conf.nsteps,n_freq])
 
+
     overlap=nfft/2
     nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))
     if conf.fast:
-        n_avg=n.min([10,nmax_avg])
+        n_avg=n.min([conf.n_avg,nmax_avg])
     else:
         n_avg=nmax_avg
     
@@ -45,9 +54,13 @@ def calculate_sweep(conf,d):
             for avg_i in range(n_avg):
                 inow=i0+step_idx*step_len + avg_i*overlap
                 tvec[step_idx]=step_idx*step_len/conf.sample_rate
-                print("%s n_avg %d"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg))
+                print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
+                
                 z=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])
                 X=n.fft.fftshift(n.fft.fft(wfun*z))
+                if conf.debug:
+                    plt.plot(fvec,10.0*n.log10(X))
+                    plt.show()
                 S[step_idx,:]+=n.abs(X[fidx])**2.0
 
                 carrier[step_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
@@ -74,14 +87,14 @@ def calculate_sweep(conf,d):
     cb=plt.colorbar()
     cb.set_label("dB")
 
-    plt.title("Cycle start %s"%(stuffr.unix2datestr(conf.t0)))
+    plt.title("Cycle start %s"%(stuffr.unix2datestr(i0/conf.sample_rate)))
     plt.show()
     
     plt.plot(tvec,10.0*n.log10(carrier))
     
     plt.xlabel("Time (s)")
     plt.ylabel("Carrier power (dB)")
-    plt.savefig("img/wb_sweep_%1.2f.png"%(conf.t0))
+    plt.savefig("img/wb_sweep_%1.2f.png"%(i0/conf.sample_rate))
     plt.show()
 
 if __name__ == "__main__":
@@ -100,4 +113,11 @@ if __name__ == "__main__":
     b=d.get_bounds(chs[0])
     print("%s-%s"%(stuffr.unix2datestr(b[0]/conf.sample_rate),stuffr.unix2datestr(b[1]/conf.sample_rate)))
 
-    calculate_sweep(conf,d)
+    if conf.debug:
+        debug_start(conf,d)
+
+
+    i0=conf.t0*conf.sample_rate + conf.offset
+    
+    for i in range(conf.n_cycles):
+        calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate)
