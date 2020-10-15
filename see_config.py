@@ -24,7 +24,8 @@ class see_config:
                      "fast":"false",
                      "n_avg":'"1"',
                      "debug":"false",
-                     "debug_timing":"false",                     
+                     "debug_timing":"false",
+                     "show_plot":"true",
                      "fmin":"-5e3",
                      "n_cycles":"1",
                      "fmax":"5e3"}
@@ -52,6 +53,7 @@ class see_config:
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
         self.debug=bool(json.loads(c["config"]["debug"]))
+        self.show_plot=bool(json.loads(c["config"]["show_plot"]))
         self.n_avg=int(json.loads(c["config"]["n_avg"]))
         self.n_cycles=int(json.loads(c["config"]["n_cycles"]))
         self.debug_timing=bool(json.loads(c["config"]["debug_timing"]))                
