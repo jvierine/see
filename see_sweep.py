@@ -87,7 +87,7 @@ def calculate_sweep(conf,d,i0):
     cb=plt.colorbar()
     cb.set_label("dB")
 
-    plt.title("Cycle start %s"%(stuffr.unix2datestr(i0/conf.sample_rate)))
+    plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
     plt.savefig("img/%s_sweep_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
     if conf.show_plot:
         plt.show()
@@ -97,6 +97,7 @@ def calculate_sweep(conf,d,i0):
     
     plt.plot(tvec,10.0*n.log10(carrier))
     plt.xlabel("Time (s)")
+    plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
     plt.ylabel("Carrier power (dB)")
     plt.savefig("img/%s_pwr_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
     if conf.show_plot:
