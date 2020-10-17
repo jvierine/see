@@ -75,7 +75,7 @@ def calculate_sweep(conf,d,i0):
     if conf.fscale == "kHz":
         fvec=fvec/1e3
         
-    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=-3,vmax=60.0)
+    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
     if conf.fscale == "kHz":
         plt.ylabel("Frequency (kHz)")

@@ -28,6 +28,8 @@ class see_config:
                      "show_plot":"true",
                      "fmin":"-5e3",
                      "prefix":'"wb"',
+                     "vmin":"-3",
+                     "vmax":"60.0",
                      "n_cycles":"1",
                      "fmax":"5e3"}
 
@@ -50,6 +52,8 @@ class see_config:
         self.ch=json.loads(c["config"]["ch"])
         self.offset=int(json.loads(c["config"]["offset"]))
         self.f0=float(json.loads(c["config"]["f0"]))
+        self.vmin=float(json.loads(c["config"]["vmin"]))
+        self.vmax=float(json.loads(c["config"]["vmax"]))        
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
