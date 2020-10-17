@@ -88,7 +88,7 @@ def calculate_sweep(conf,d,i0):
     cb.set_label("dB")
 
     plt.title("Cycle start %s"%(stuffr.unix2datestr(i0/conf.sample_rate)))
-    plt.savefig("img/wb_sweep_%1.2f.png"%(i0/conf.sample_rate))
+    plt.savefig("img/%s_sweep_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
     if conf.show_plot:
         plt.show()
     else:
@@ -98,7 +98,7 @@ def calculate_sweep(conf,d,i0):
     plt.plot(tvec,10.0*n.log10(carrier))
     plt.xlabel("Time (s)")
     plt.ylabel("Carrier power (dB)")
-    plt.savefig("img/wb_pwr_%1.2f.png"%(i0/conf.sample_rate))
+    plt.savefig("img/%s_pwr_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
     if conf.show_plot:
         plt.show()
     else:
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     b=d.get_bounds(chs[0])
     print("%s-%s"%(stuffr.unix2datestr(b[0]/conf.sample_rate),stuffr.unix2datestr(b[1]/conf.sample_rate)))
 
-    if conf.debug:
+    if conf.debug_timing:
         debug_start(conf,d)
 
 
