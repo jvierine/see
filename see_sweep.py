@@ -9,6 +9,8 @@ import sys
 import see_config as sc
 import stuffr
 import os
+import itertools as ito
+import h5py
 
 def debug_start(conf,d):
     for i in range(30):
@@ -19,7 +21,104 @@ def debug_start(conf,d):
         plt.plot(n.fft.fftshift(n.fft.fftfreq(1000000,d=1/conf.sample_rate))/1e6,10.0*n.log10(n.fft.fftshift(n.abs(n.fft.fft(z[0:1000000]))**2.0)))
         plt.show()
 
-def calculate_sweep(conf,d,i0):
+def phase_channels(conf,d,i0,carrier_width=20.0,cphases=None,camps=None,use_cphases=False,phase_freq_range=[-1e3,-10e3]):
+    """
+    simple calculation of phase differences between ch0 and other channels
+    as well as channel amplitude.
+    can be used to beamform all channels together.
+    """
+    if use_cphases:
+        print("Using calibrated phases")
+    else:
+        cphases=n.zeros(len(conf.ch))
+        camps=n.ones(len(conf.ch))        
+    fvec=n.fft.fftshift(n.fft.fftfreq(conf.nfft,d=1.0/conf.sample_rate))
+    fidx=n.where( (fvec>conf.fmin)&(fvec<conf.fmax))[0]
+    carrier_fidx=n.where( (fvec>-10.0)&(fvec<10.0))[0]
+    n_freq=len(fidx)
+    nfft=conf.nfft
+    step_len=conf.step_len*conf.sample_rate
+    t=n.arange(nfft,dtype=n.float32)/conf.sample_rate
+    wfun=s.chebwin(nfft,150)
+    n_chan=len(conf.ch)
+    ch_pairs=[]
+    n_pair=0
+    for i in range(1,n_chan):
+        ch_pairs.append((0,i))
+        n_pair+=1
+    
+    S=n.zeros([n_pair,conf.nsteps,n_freq],dtype=n.complex64)
+    overlap=int(nfft/conf.overlap_fraction)
+    nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))
+    n_avg=10
+    tvec=n.zeros(conf.nsteps)
+    pwrs=n.zeros(len(conf.ch))
+    npwrs=n.zeros(len(conf.ch))    
+    for step_idx in range(conf.nsteps):
+        fnow = conf.f0 + step_idx*conf.fstep
+        fshift = conf.center_freq-fnow
+        dshift=n.exp(1j*2.0*n.pi*fshift*t)
+        
+        for pi,ci in enumerate(ch_pairs):
+            for avg_i in range(n_avg):
+                inow=i0+step_idx*step_len + avg_i*overlap
+                print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
+                tvec[step_idx]=step_idx*step_len/conf.sample_rate
+                
+                z0=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ci[0]])*camps[ci[0]]*n.exp(1j*cphases[ci[0]])
+                pwrs[ci[0]]+=n.mean(n.abs(z0)**2.0)
+                npwrs[ci[0]]+=1.0
+                z1=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ci[1]])*camps[ci[1]]*n.exp(1j*cphases[ci[1]])
+                pwrs[ci[1]]+=n.mean(n.abs(z1)**2.0)
+                npwrs[ci[1]]+=1.0                
+                X0=n.fft.fftshift(n.fft.fft(wfun*z0))
+                X1=n.fft.fftshift(n.fft.fft(wfun*z1))                
+                S[pi,step_idx,:]+=X0[fidx]*n.conj(X1[fidx])
+                
+    gfidx=n.where( (fvec[fidx]>phase_freq_range[0])&(fvec[fidx]<phase_freq_range[1]))[0]
+    phase_diffs=[]
+    
+    for i in range(n_pair):
+        xc=n.copy(S[i,:,gfidx])
+        xc=xc.flatten()
+        xc_idx=n.argsort(xc)
+        phase_diff=n.angle(n.sum(xc[xc_idx[int(len(xc_idx)*0.3):int(len(xc_idx)*0.9)]]))
+        phase_diffs.append(phase_diff)
+        if use_cphases:
+            plt.pcolormesh(n.angle(S[i,:,:]))
+            plt.colorbar()
+            plt.show()
+            plt.plot(n.angle(n.sum(S[i,:,:],axis=0)))
+            plt.axhline(phase_diff)
+            plt.show()
+        
+    ch_pwrs=pwrs/npwrs
+
+    phases=n.zeros(n_chan)
+    # simple phaseup with reference to channel 0
+    # ph0-ph1
+    # ph0-ph2
+    # ph0-ph3
+    # ph0-ph4
+    for i in range(n_pair):
+        phases[i+1]=phase_diffs[i]
+#    plt.plot(phases)
+ #   plt.show()
+    # pha = 0
+    # pha - phb = mab
+    # pha - phc = 
+    return(1.0/n.sqrt(ch_pwrs),phases)
+                
+    
+        
+def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
+
+    if use_cphases:
+        print("Using calcibrated phases")
+    else:
+        cphases=n.zeros(len(conf.ch))
+        camps=n.ones(len(conf.ch))
+        
     fvec=n.fft.fftshift(n.fft.fftfreq(conf.nfft,d=1.0/conf.sample_rate))
     fidx=n.where( (fvec>conf.fmin)&(fvec<conf.fmax))[0]
 
@@ -36,7 +135,7 @@ def calculate_sweep(conf,d,i0):
     S=n.zeros([conf.nsteps,n_freq])
 
 
-    overlap=nfft/2
+    overlap=int(nfft/conf.overlap_fraction)
     nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))
     if conf.fast:
         n_avg=n.min([conf.n_avg,nmax_avg])
@@ -45,35 +144,48 @@ def calculate_sweep(conf,d,i0):
     
     tvec=n.zeros(conf.nsteps)
     carrier = n.zeros(conf.nsteps,dtype=n.complex64)
+    f0s=n.zeros(conf.nsteps)
     for step_idx in range(conf.nsteps):
         fnow = conf.f0 + step_idx*conf.fstep
+        f0s[step_idx]=fnow
         fshift = conf.center_freq-fnow
         dshift=n.exp(1j*2.0*n.pi*fshift*t)
 
-        for ch_i in range(len(conf.ch)):
-            for avg_i in range(n_avg):
-                inow=i0+step_idx*step_len + avg_i*overlap
-                tvec[step_idx]=step_idx*step_len/conf.sample_rate
-                print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
-                
-                z=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])
-                X=n.fft.fftshift(n.fft.fft(wfun*z))
-                if conf.debug:
-                    plt.plot(fvec,10.0*n.log10(X))
-                    plt.show()
-                S[step_idx,:]+=n.abs(X[fidx])**2.0
+        
+        for avg_i in range(n_avg):
+            inow=i0+step_idx*step_len + avg_i*overlap
+            tvec[step_idx]=step_idx*step_len/conf.sample_rate
+            print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
 
-                carrier[step_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
-        #plt.plot(z.real)
-        #plt.plot(z.imag)
-        #plt.show()
-        #plt.plot(10.0*n.log10(n.abs(X)**2.0))
-        #plt.show()
+            z=n.zeros(nfft,dtype=n.complex128)
+            # beamform signals
+            for ch_i in range(len(conf.ch)):
+                
+                z+=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])*camps[ch_i]*n.exp(1j*cphases[ch_i])
+            X=n.fft.fftshift(n.fft.fft(wfun*z))
+            if conf.debug:
+                plt.plot(fvec,10.0*n.log10(X))
+                plt.show()
+                
+            S[step_idx,:]+=n.abs(X[fidx])**2.0
+            carrier[step_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
+                
     dB=10.0*n.log10(S)
     dB=dB-n.nanmedian(dB)
     
     if conf.fscale == "kHz":
         fvec=fvec/1e3
+
+    ho=h5py.File("img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate),"w")
+    ho["S"]=S
+    ho["phases"]=cphases
+    ho["amps"]=camps
+    ho["time_vec"]=tvec
+    ho["freq_vec"]=fvec[fidx]
+    ho["f0s"]=f0s
+    ho["ch"]=conf.ch
+    ho["carrier_pwr"]=carrier
+    ho.close()
         
     plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
@@ -127,6 +239,12 @@ if __name__ == "__main__":
 
 
     i0=conf.t0*conf.sample_rate + conf.offset
+    if len(conf.ch)>1:
+        amps,phases=phase_channels(conf,d,i0)
+#    phase_channels(conf,d,i0,cphases=phases,camps=amps,use_cphases=True)    
     
     for i in range(conf.n_cycles):
-        calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate)
+        if len(conf.ch)>1:
+            calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate,use_cphases=True,cphases=phases,camps=amps)
+        else:
+            calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate,use_cphases=False)

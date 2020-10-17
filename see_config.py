@@ -18,6 +18,7 @@ class see_config:
                      "fstep":"3.125e3",
                      "f0":"3.9e6",
                      "nfft":"262144",
+                     "overlap_fraction":"2",                     
                      "ch":'["chc"]',
                      "offset":"1530",
                      "fscale":'"Hz"',
@@ -60,6 +61,7 @@ class see_config:
         self.debug=bool(json.loads(c["config"]["debug"]))
         self.show_plot=bool(json.loads(c["config"]["show_plot"]))
         self.n_avg=int(json.loads(c["config"]["n_avg"]))
+        self.overlap_fraction=float(json.loads(c["config"]["overlap_fraction"]))        
         self.n_cycles=int(json.loads(c["config"]["n_cycles"]))
         self.prefix=json.loads(c["config"]["prefix"])
         self.debug_timing=bool(json.loads(c["config"]["debug_timing"]))                
