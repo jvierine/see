@@ -34,6 +34,7 @@ class see_config:
                      "vmin":"-3",
                      "vmax":"60.0",
                      "n_cycles":"1",
+                     "xc":"false",
                      "fmax":"5e3"}
 
         if fname != None:
@@ -61,6 +62,7 @@ class see_config:
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
+        self.xc=bool(json.loads(c["config"]["xc"]))        
         self.debug=bool(json.loads(c["config"]["debug"]))
         self.plot_carrier_pwr=bool(json.loads(c["config"]["plot_carrier_pwr"]))        
         self.show_plot=bool(json.loads(c["config"]["show_plot"]))
