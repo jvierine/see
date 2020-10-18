@@ -181,6 +181,8 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     
     if conf.fscale == "kHz":
         fvec_p=fvec/1e3
+    else:
+        fvec_p=fvec
 
     ho=h5py.File("img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate),"w")
     ho["S"]=S
