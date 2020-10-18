@@ -34,6 +34,7 @@ class see_config:
                      "vmin":"-3",
                      "vmax":"60.0",
                      "n_cycles":"1",
+                     "cycle_len":"1800.0",                     
                      "trim_end":"0",
                      "xc":"false",
                      "fmax":"5e3"}
@@ -50,6 +51,7 @@ class see_config:
         self.center_freq=float(json.loads(c["config"]["center_freq"]))
         self.data_dirs=json.loads(c["config"]["data_dirs"])
         self.step_len=float(json.loads(c["config"]["step_len"]))
+        self.cycle_len=float(json.loads(c["config"]["cycle_len"]))        
         self.nsteps=int(json.loads(c["config"]["nsteps"]))
         self.nfft=int(json.loads(c["config"]["nfft"]))
         self.nsubsteps=int(json.loads(c["config"]["nsubsteps"]))        
