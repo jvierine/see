@@ -132,48 +132,55 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 
     wfun=s.chebwin(nfft,150)
 
-    S=n.zeros([conf.nsteps,n_freq])
-
+    S=n.zeros([conf.nsteps*conf.nsubsteps,n_freq])
 
     overlap=int(nfft/conf.overlap_fraction)
-    
-    nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))+1
+    nmax_avg=int(n.floor(conf.step_len*conf.sample_rate/overlap/conf.nsubsteps))+1
+
+    sub_len=int(n.floor(step_len/conf.nsubsteps))
     
     if conf.fast:
         n_avg=n.min([conf.n_avg,nmax_avg])
     else:
         n_avg=nmax_avg
     
-    tvec=n.zeros(conf.nsteps)
-    carrier = n.zeros(conf.nsteps,dtype=n.complex64)
-    f0s=n.zeros(conf.nsteps)
+    tvec=n.zeros(conf.nsteps*conf.nsubsteps)
+    carrier = n.zeros(conf.nsteps*conf.nsubsteps,dtype=n.complex64)
+    f0s=n.zeros(conf.nsteps*conf.nsubsteps)
     
     for step_idx in range(conf.nsteps):
         fnow = conf.f0 + step_idx*conf.fstep
-        f0s[step_idx]=fnow
         fshift = conf.center_freq-fnow
         dshift=n.exp(1j*2.0*n.pi*fshift*t)
-
         
-        for avg_i in range(n_avg):
-            inow=i0+step_idx*step_len + avg_i*overlap
-            tvec[step_idx]=step_idx*step_len/conf.sample_rate
-            print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
-
-            z=n.zeros(nfft,dtype=n.complex128)
-            # beamform signals
-            for ch_i in range(len(conf.ch)):                
-                z+=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])*camps[ch_i]*n.exp(1j*cphases[ch_i])
-            X=n.fft.fftshift(n.fft.fft(wfun*z))
+        for sub_idx in range(conf.nsubsteps):
+            
+            f0s[step_idx*conf.nsubsteps+sub_idx]=fnow
+            tvec[step_idx*conf.nsubsteps+sub_idx]=(step_idx*step_len+sub_idx*sub_len)/conf.sample_rate
+            
+            for avg_i in range(n_avg):
+                inow=i0 + step_idx*step_len + sub_idx*sub_len + avg_i*overlap
                 
-            S[step_idx,:]+=n.abs(X[fidx])**2.0
-            carrier[step_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
+                print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),n_avg,nmax_avg,fnow/1e6))
+                
+                z=n.zeros(nfft,dtype=n.complex128)
+                # beamform signals
+                for ch_i in range(len(conf.ch)):
+                    z+=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])*camps[ch_i]*n.exp(1j*cphases[ch_i])
+                    
+                X=n.fft.fftshift(n.fft.fft(wfun*z))
+                if conf.debug:
+                    plt.plot(fvec,10.0*n.log10(X))
+                    plt.show()
+                
+                S[step_idx*conf.nsubsteps+sub_idx,:]+=n.abs(X[fidx])**2.0
+                carrier[step_idx*conf.nsubsteps+sub_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
                 
     dB=10.0*n.log10(S)
     dB=dB-n.nanmedian(dB)
     
     if conf.fscale == "kHz":
-        fvec=fvec/1e3
+        fvec_p=fvec/1e3
 
     ho=h5py.File("img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate),"w")
     ho["S"]=S
@@ -184,12 +191,13 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["f0s"]=f0s
     ho["carrier_pwr"]=carrier
     ho["center_freq"]=conf.center_freq
+    ho["fscale"]=str(conf.fscale)
     ho["t0"]=i0/conf.sample_rate
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
 
-    plt.figure(figsize=(8*1.5,6*1.5))
-    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
+    plt.figure(figsize=(8*1.2,6*1.2))
+    plt.pcolormesh(tvec,fvec_p[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
     if conf.fscale == "kHz":
         plt.ylabel("Frequency (kHz)")
@@ -209,17 +217,17 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     else:
         plt.clf()
         plt.close()
-    
-    plt.plot(tvec,10.0*n.log10(carrier))
-    plt.xlabel("Time (s)")
-    plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
-    plt.ylabel("Carrier power (dB)")
-    plt.savefig("img/%s_pwr_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
-    if conf.show_plot:
-        plt.show()
-    else:
-        plt.clf()
-        plt.close()
+    if conf.plot_carrier_pwr:
+        plt.plot(tvec,10.0*n.log10(carrier))
+        plt.xlabel("Time (s)")
+        plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
+        plt.ylabel("Carrier power (dB)")
+        plt.savefig("img/%s_pwr_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
+        if conf.show_plot:
+            plt.show()
+        else:
+            plt.clf()
+            plt.close()
         
 def calculate_sweep_xc(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 
@@ -303,6 +311,7 @@ def calculate_sweep_xc(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["t0"]=i0/conf.sample_rate
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
+
 
 
 if __name__ == "__main__":
