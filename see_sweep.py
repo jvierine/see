@@ -11,6 +11,7 @@ import stuffr
 import os
 import itertools as ito
 import h5py
+import clean_image 
 
 def debug_start(conf,d):
     for i in range(30):
@@ -135,9 +136,8 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     S=n.zeros([conf.nsteps*conf.nsubsteps,n_freq])
 
     overlap=int(nfft/conf.overlap_fraction)
-    nmax_avg=int(n.floor(conf.step_len*conf.sample_rate/overlap/conf.nsubsteps))+1
-
-    sub_len=int(n.floor(step_len/conf.nsubsteps))
+    nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-conf.trim_end)/overlap/conf.nsubsteps))+1
+    sub_len=int(n.floor((step_len-conf.trim_end)/conf.nsubsteps))
     
     if conf.fast:
         n_avg=n.min([conf.n_avg,nmax_avg])
@@ -176,15 +176,10 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
                 S[step_idx*conf.nsubsteps+sub_idx,:]+=n.abs(X[fidx])**2.0
                 carrier[step_idx*conf.nsubsteps+sub_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
                 
-    dB=10.0*n.log10(S)
-    dB=dB-n.nanmedian(dB)
-    
-    if conf.fscale == "kHz":
-        fvec_p=fvec/1e3
-    else:
-        fvec_p=fvec
 
-    ho=h5py.File("img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate),"w")
+    ofname="img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate)
+    print("Saving %s"%(ofname))
+    ho=h5py.File(ofname,"w")
     ho["S"]=S
     ho["phases"]=cphases
     ho["amps"]=camps
@@ -198,38 +193,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
 
-    plt.figure(figsize=(8*1.2,6*1.2))
-    plt.pcolormesh(tvec,fvec_p[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
-    plt.xlabel("Time (s)")
-    if conf.fscale == "kHz":
-        plt.ylabel("Frequency (kHz)")
-        plt.ylim([conf.fmin/1e3,conf.fmax/1e3])
-    else:
-        plt.ylabel("Frequency (Hz)")
-        plt.ylim([conf.fmin,conf.fmax])        
-    plt.xlim([n.min(tvec),n.max(tvec)])
-    cb=plt.colorbar()
-    cb.set_label("dB")
-
-    plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
-    plt.tight_layout()
-    plt.savefig("img/%s_sweep_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
-    if conf.show_plot:
-        plt.show()
-    else:
-        plt.clf()
-        plt.close()
-    if conf.plot_carrier_pwr:
-        plt.plot(tvec,10.0*n.log10(carrier))
-        plt.xlabel("Time (s)")
-        plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
-        plt.ylabel("Carrier power (dB)")
-        plt.savefig("img/%s_pwr_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
-        if conf.show_plot:
-            plt.show()
-        else:
-            plt.clf()
-            plt.close()
+    clean_image.plot_file(ofname,show_plot=conf.show_plot)
         
 def calculate_sweep_xc(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 

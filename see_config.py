@@ -34,6 +34,7 @@ class see_config:
                      "vmin":"-3",
                      "vmax":"60.0",
                      "n_cycles":"1",
+                     "trim_end":"0",
                      "xc":"false",
                      "fmax":"5e3"}
 
@@ -56,6 +57,7 @@ class see_config:
         self.fmax=float(json.loads(c["config"]["fmax"]))
         self.ch=json.loads(c["config"]["ch"])
         self.offset=int(json.loads(c["config"]["offset"]))
+        self.trim_end=int(json.loads(c["config"]["trim_end"]))        
         self.f0=float(json.loads(c["config"]["f0"]))
         self.vmin=float(json.loads(c["config"]["vmin"]))
         self.vmax=float(json.loads(c["config"]["vmax"]))        
