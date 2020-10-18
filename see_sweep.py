@@ -180,7 +180,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     dB=dB-n.nanmedian(dB)
     
     if conf.fscale == "kHz":
-        fvec=fvec/1e3
+        fvec_p=fvec/1e3
 
     ho=h5py.File("img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate),"w")
     ho["S"]=S
@@ -191,12 +191,13 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["f0s"]=f0s
     ho["carrier_pwr"]=carrier
     ho["center_freq"]=conf.center_freq
+    ho["fscale"]=str(conf.fscale)
     ho["t0"]=i0/conf.sample_rate
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
 
     plt.figure(figsize=(8*1.2,6*1.2))
-    plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
+    plt.pcolormesh(tvec,fvec_p[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
     if conf.fscale == "kHz":
         plt.ylabel("Frequency (kHz)")
