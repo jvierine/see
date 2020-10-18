@@ -21,7 +21,7 @@ def debug_start(conf,d):
         plt.plot(n.fft.fftshift(n.fft.fftfreq(1000000,d=1/conf.sample_rate))/1e6,10.0*n.log10(n.fft.fftshift(n.abs(n.fft.fft(z[0:1000000]))**2.0)))
         plt.show()
 
-def phase_channels(conf,d,i0,carrier_width=20.0,cphases=None,camps=None,use_cphases=False,phase_freq_range=[-1e3,-10e3]):
+def phase_channels(conf,d,i0,carrier_width=10.0,cphases=None,camps=None,use_cphases=False):
     """
     simple calculation of phase differences between ch0 and other channels
     as well as channel amplitude.
@@ -50,7 +50,7 @@ def phase_channels(conf,d,i0,carrier_width=20.0,cphases=None,camps=None,use_cpha
     S=n.zeros([n_pair,conf.nsteps,n_freq],dtype=n.complex64)
     overlap=int(nfft/conf.overlap_fraction)
     nmax_avg=int(n.floor((conf.step_len*conf.sample_rate-nfft-conf.offset)/overlap))
-    n_avg=10
+    n_avg=1
     tvec=n.zeros(conf.nsteps)
     pwrs=n.zeros(len(conf.ch))
     npwrs=n.zeros(len(conf.ch))    
@@ -75,7 +75,7 @@ def phase_channels(conf,d,i0,carrier_width=20.0,cphases=None,camps=None,use_cpha
                 X1=n.fft.fftshift(n.fft.fft(wfun*z1))                
                 S[pi,step_idx,:]+=X0[fidx]*n.conj(X1[fidx])
                 
-    gfidx=n.where( (fvec[fidx]>phase_freq_range[0])&(fvec[fidx]<phase_freq_range[1]))[0]
+    gfidx=n.where( n.abs((fvec[fidx])>carrier_width))[0]    
     phase_diffs=[]
     
     for i in range(n_pair):
@@ -183,19 +183,21 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["time_vec"]=tvec
     ho["freq_vec"]=fvec[fidx]
     ho["f0s"]=f0s
-    ho["ch"]=conf.ch
     ho["carrier_pwr"]=carrier
+    ho["center_freq"]=conf.center_freq
+    ho["t0"]=i0/conf.sample_rate
+    ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
         
     plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
     if conf.fscale == "kHz":
         plt.ylabel("Frequency (kHz)")
-        plt.ylim([conf.fmin/1e3,conf.fmax/1e3])        
+        plt.ylim([conf.fmin/1e3,conf.fmax/1e3])
     else:
         plt.ylabel("Frequency (Hz)")
         plt.ylim([conf.fmin,conf.fmax])        
-        
+    plt.xlim([n.min(tvec),n.max(tvec)])
     cb=plt.colorbar()
     cb.set_label("dB")
 
@@ -241,7 +243,8 @@ if __name__ == "__main__":
     i0=conf.t0*conf.sample_rate + conf.offset
     if len(conf.ch)>1:
         amps,phases=phase_channels(conf,d,i0)
-#    phase_channels(conf,d,i0,cphases=phases,camps=amps,use_cphases=True)    
+        # debug phasing
+        #phase_channels(conf,d,i0,cphases=phases,camps=amps,use_cphases=True)    
     
     for i in range(conf.n_cycles):
         if len(conf.ch)>1:
