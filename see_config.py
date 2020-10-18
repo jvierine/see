@@ -27,8 +27,10 @@ class see_config:
                      "debug":"false",
                      "debug_timing":"false",
                      "show_plot":"true",
+                     "plot_carrier_pwr":"false",                     
                      "fmin":"-5e3",
                      "prefix":'"wb"',
+                     "nsubsteps":"1",
                      "vmin":"-3",
                      "vmax":"60.0",
                      "n_cycles":"1",
@@ -48,6 +50,7 @@ class see_config:
         self.step_len=float(json.loads(c["config"]["step_len"]))
         self.nsteps=int(json.loads(c["config"]["nsteps"]))
         self.nfft=int(json.loads(c["config"]["nfft"]))
+        self.nsubsteps=int(json.loads(c["config"]["nsubsteps"]))        
         self.fmin=float(json.loads(c["config"]["fmin"]))
         self.fmax=float(json.loads(c["config"]["fmax"]))
         self.ch=json.loads(c["config"]["ch"])
@@ -59,6 +62,7 @@ class see_config:
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
         self.debug=bool(json.loads(c["config"]["debug"]))
+        self.plot_carrier_pwr=bool(json.loads(c["config"]["plot_carrier_pwr"]))        
         self.show_plot=bool(json.loads(c["config"]["show_plot"]))
         self.n_avg=int(json.loads(c["config"]["n_avg"]))
         self.overlap_fraction=float(json.loads(c["config"]["overlap_fraction"]))        
