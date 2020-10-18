@@ -188,7 +188,8 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["t0"]=i0/conf.sample_rate
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
-        
+
+    plt.figure(figsize=(8*1.5,6*1.5))
     plt.pcolormesh(tvec,fvec[fidx],n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax,cmap="plasma")
     plt.xlabel("Time (s)")
     if conf.fscale == "kHz":
@@ -202,6 +203,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     cb.set_label("dB")
 
     plt.title("Cycle start %s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(i0/conf.sample_rate),conf.center_freq/1e6))
+    plt.tight_layout()
     plt.savefig("img/%s_sweep_%1.2f.png"%(conf.prefix,i0/conf.sample_rate))
     if conf.show_plot:
         plt.show()
