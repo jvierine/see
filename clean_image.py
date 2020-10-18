@@ -47,14 +47,16 @@ def plot_file(fname,show_plot=False,clean_plot=False):
     freq_p=n.copy(h["freq_vec"].value)
     if fscale == "kHz":
         freq_p=freq_p/1e3
-    
-    cm=ax1.pcolormesh(h["time_vec"].value,freq_p,n.transpose(dB),vmin=-6,vmax=40,cmap="plasma")
+
+    tvec=h["time_vec"].value
+    cm=ax1.pcolormesh(tvec,freq_p,n.transpose(dB),vmin=-6,vmax=40,cmap="plasma")
     ax1.set_xlabel("Time (s)")
 
     ax1.set_ylabel("Frequency offset (%s)"%(fscale))
     cb=fig.colorbar(cm,ax=ax1)
     cb.set_label("dB")
     ax1.set_ylim([n.min(freq_p),n.max(freq_p)])
+    ax1.set_xlim([n.min(tvec),n.max(tvec)])    
 
     ax2 = ax1.twiny()    
     ax2.plot(h["f0s"].value/1e6, n.ones(len(h["f0s"].value)),alpha=0)
@@ -120,4 +122,4 @@ def plot_file(fname,show_plot=False,clean_plot=False):
             
 # example
 if __name__ == "__main__":
-    plot_file(sys.argv[1])
+    plot_file(sys.argv[1],show_plot=True)
