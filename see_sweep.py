@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
     if conf.xc:
         for i in range(conf.n_cycles):
-            calculate_sweep_xc(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate)
+            calculate_sweep_xc(conf,d,i0+i*conf.cycle_len*conf.sample_rate)
     
     
     if len(conf.ch)>1:
@@ -314,6 +314,6 @@ if __name__ == "__main__":
     
     for i in range(conf.n_cycles):
         if len(conf.ch)>1:
-            calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate,use_cphases=True,cphases=phases,camps=amps)
+            calculate_sweep(conf,d,i0+i*conf.cycle_len*conf.sample_rate,use_cphases=True,cphases=phases,camps=amps)
         else:
-            calculate_sweep(conf,d,i0+i*conf.nsteps*conf.step_len*conf.sample_rate,use_cphases=False)
+            calculate_sweep(conf,d,i0+i*conf.cycle_len*conf.sample_rate,use_cphases=False)
