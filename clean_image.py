@@ -78,11 +78,11 @@ def plot_file(fname,show_plot=False,clean_plot=False):
         #  plt.pcolormesh(diff)
         # plt.show()
         idx=n.where(diff>20.0*std_est)
-        print(idx)
+#        print(idx)
         dBc[idx[0]+1,idx[1]]=n.nan
         dBc[idx[0],idx[1]]=n.nan
-        plt.pcolormesh(n.transpose(dBc),vmin=-3,vmax=40,cmap="plasma")
-        plt.show()
+ #       plt.pcolormesh(n.transpose(dBc),vmin=-3,vmax=40,cmap="plasma")
+  #      plt.show()
     
         for i in range(dB.shape[1]):
             print("%d/%d"%(i,dB.shape[1]))
@@ -104,6 +104,7 @@ def plot_file(fname,show_plot=False,clean_plot=False):
         cm=ax1.pcolormesh(h["time_vec"].value,freq_p,n.transpose(dBc),vmin=-6,vmax=40,cmap="plasma")
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Frequency offset (%s)"%(fscale))
+        ax1.set_xlim([n.min(tvec),n.max(tvec)])            
         cb=fig.colorbar(cm,ax=ax1)
         cb.set_label("dB")
         ax1.set_ylim([n.min(freq_p),n.max(freq_p)])
@@ -111,6 +112,7 @@ def plot_file(fname,show_plot=False,clean_plot=False):
         print(h["f0s"].value)
         ax2.plot(h["f0s"].value/1e6, n.ones(len(h["f0s"].value)),alpha=0)
         ax2.set_xlabel("Heating frequency (MHz)")
+        ax2.set_ylim([n.min(freq_p),n.max(freq_p)])        
         plt.tight_layout()
         plt.savefig("%s.c.png"%(sys.argv[1]))
         if show_plot:
@@ -122,4 +124,4 @@ def plot_file(fname,show_plot=False,clean_plot=False):
             
 # example
 if __name__ == "__main__":
-    plot_file(sys.argv[1],show_plot=True)
+    plot_file(sys.argv[1],show_plot=False,clean_plot=True)

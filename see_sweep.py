@@ -165,10 +165,8 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
             for avg_i in range(n_avg):
                 inow=i0 + step_idx*step_len + sub_idx*sub_len + avg_i*overlap
                 
-                
-
                 # make sure this fits the step
-                if (inow+nfft-step_i0) < step_len:
+                if (inow+nfft-step_i0+conf.trim_end) < step_len:
                     print("%s n_avg %d/%d f0 %1.2f"%(stuffr.unix2datestr(inow/conf.sample_rate),avg_i,nmax_avg,fnow/1e6))
                     z=n.zeros(nfft,dtype=n.complex128)
                     # beamform signals
