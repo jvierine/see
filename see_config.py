@@ -21,6 +21,7 @@ class see_config:
                      "overlap_fraction":"2",                     
                      "ch":'["chc"]',
                      "offset":"1530",
+                     "cycle_num":"0",                     
                      "fscale":'"Hz"',
                      "fast":"false",
                      "n_avg":'"1"',
@@ -53,6 +54,7 @@ class see_config:
         self.step_len=float(json.loads(c["config"]["step_len"]))
         self.cycle_len=float(json.loads(c["config"]["cycle_len"]))        
         self.nsteps=int(json.loads(c["config"]["nsteps"]))
+        self.cycle_num=int(json.loads(c["config"]["cycle_num"]))        
         self.nfft=int(json.loads(c["config"]["nfft"]))
         self.nsubsteps=int(json.loads(c["config"]["nsubsteps"]))        
         self.fmin=float(json.loads(c["config"]["fmin"]))

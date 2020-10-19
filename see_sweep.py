@@ -318,7 +318,7 @@ if __name__ == "__main__":
         # debug phasing
         #phase_channels(conf,d,i0,cphases=phases,camps=amps,use_cphases=True)    
     
-    for i in range(conf.n_cycles):
+    for i in range(conf.cycle_num,conf.n_cycles):
         if len(conf.ch)>1:
             calculate_sweep(conf,d,i0+i*conf.cycle_len*conf.sample_rate,use_cphases=True,cphases=phases,camps=amps)
         else:

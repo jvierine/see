@@ -1,8 +1,10 @@
 #!/bin/bash 
-
+#
+# Start SEE recorder
+#
 sudo ntpdate ntp.uit.no
 
-freq=4.04e6
+freq=4.2e6
 rate=1e6
 
 datestr=`date +%Y.%m.%d`
