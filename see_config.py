@@ -27,11 +27,16 @@ class see_config:
                      "debug":"false",
                      "debug_timing":"false",
                      "show_plot":"true",
+                     "plot_carrier_pwr":"false",                     
                      "fmin":"-5e3",
                      "prefix":'"wb"',
+                     "nsubsteps":"1",
                      "vmin":"-3",
                      "vmax":"60.0",
                      "n_cycles":"1",
+                     "cycle_len":"1800.0",                     
+                     "trim_end":"0",
+                     "xc":"false",
                      "fmax":"5e3"}
 
         if fname != None:
@@ -46,19 +51,24 @@ class see_config:
         self.center_freq=float(json.loads(c["config"]["center_freq"]))
         self.data_dirs=json.loads(c["config"]["data_dirs"])
         self.step_len=float(json.loads(c["config"]["step_len"]))
+        self.cycle_len=float(json.loads(c["config"]["cycle_len"]))        
         self.nsteps=int(json.loads(c["config"]["nsteps"]))
         self.nfft=int(json.loads(c["config"]["nfft"]))
+        self.nsubsteps=int(json.loads(c["config"]["nsubsteps"]))        
         self.fmin=float(json.loads(c["config"]["fmin"]))
         self.fmax=float(json.loads(c["config"]["fmax"]))
         self.ch=json.loads(c["config"]["ch"])
         self.offset=int(json.loads(c["config"]["offset"]))
+        self.trim_end=int(json.loads(c["config"]["trim_end"]))        
         self.f0=float(json.loads(c["config"]["f0"]))
         self.vmin=float(json.loads(c["config"]["vmin"]))
         self.vmax=float(json.loads(c["config"]["vmax"]))        
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
+        self.xc=bool(json.loads(c["config"]["xc"]))        
         self.debug=bool(json.loads(c["config"]["debug"]))
+        self.plot_carrier_pwr=bool(json.loads(c["config"]["plot_carrier_pwr"]))        
         self.show_plot=bool(json.loads(c["config"]["show_plot"]))
         self.n_avg=int(json.loads(c["config"]["n_avg"]))
         self.overlap_fraction=float(json.loads(c["config"]["overlap_fraction"]))        
