@@ -1,0 +1,19 @@
+# Simple autossh reverse tunnel setup for ubuntu
+# replace USER, SERVER, and USERNAME
+# To install:
+# sudo cp autossh.service /etc/systemd/system/autossh.service
+# 
+# sudo systemctl daemon-reload
+# sudo systemctl start autossh.service
+# sudo systemctl enable autossh.service
+#
+[Unit]
+Description=AutoSSH tunnel service 
+After=network.target
+
+[Service]
+User=USERNAME
+ExecStart=/usr/bin/autossh  -f -M 0 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=false -N USER@SERVERNAME -R 2244:localhost:22 
+
+[Install]
+WantedBy=multi-user.target
