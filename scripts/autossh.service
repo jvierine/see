@@ -12,8 +12,17 @@ Description=AutoSSH tunnel service
 After=network.target
 
 [Service]
-User=USERNAME
-ExecStart=/usr/bin/autossh  -f -M 0 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=false -N USER@SERVERNAME -R 2244:localhost:22 
+User=USER
+Environment="AUTOSSH_GATETIME=0"
+# -p [PORT]
+# -l [user]
+# -M 0 --> no monitoring
+# -N Just open the connection and do nothing (not interactive)
+ExecStart=/usr/bin/autossh -M 0 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o "ExitOnForwardFailure=yes" -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=false -N USER@SERVER -R 2244:localhost:22
+
+ExecStop=killall -s KILL autossh
+
 
 [Install]
 WantedBy=multi-user.target
+
