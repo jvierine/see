@@ -12,6 +12,7 @@ import os
 import itertools as ito
 import h5py
 import clean_image 
+import time
 
 def debug_start(conf,d):
     for i in range(30):
@@ -114,6 +115,9 @@ def phase_channels(conf,d,i0,carrier_width=10.0,cphases=None,camps=None,use_cpha
         
 def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 
+    ofname="img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate)
+    if os.path.exists(ofname) and conf.overwrite == False:
+        print("File %s already exists. Skipping."%(ofname))
     if use_cphases:
         print("Using calcibrated phases")
     else:
@@ -171,7 +175,10 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
                     z=n.zeros(nfft,dtype=n.complex128)
                     # beamform signals
                     for ch_i in range(len(conf.ch)):
-                        z+=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])*camps[ch_i]*n.exp(1j*cphases[ch_i])
+                        try:
+                            z+=dshift*d.read_vector_c81d(inow,nfft,conf.ch[ch_i])*camps[ch_i]*n.exp(1j*cphases[ch_i])
+                        except:
+                            print("missing data")
                     
                     X=n.fft.fftshift(n.fft.fft(wfun*z))
                     if conf.debug:
@@ -183,7 +190,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
                     carrier[step_idx*conf.nsubsteps+sub_idx]+=n.sum(n.abs(X[carrier_fidx])**2.0)
                 
     S=S/N_avgd
-    ofname="img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate)
+#    ofname="img/%s_sweep_%1.2f.h5"%(conf.prefix,i0/conf.sample_rate)
     print("Saving %s"%(ofname))
     ho=h5py.File(ofname,"w")
     ho["S"]=S
@@ -199,7 +206,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
 
-    clean_image.plot_file(ofname,show_plot=conf.show_plot)
+    clean_image.plot_file(ofname,show_plot=conf.show_plot,vmin=conf.vmin,vmax=conf.vmax)
         
 def calculate_sweep_xc(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 
@@ -305,21 +312,33 @@ if __name__ == "__main__":
     if conf.debug_timing:
         debug_start(conf,d)
 
-
     i0=conf.t0*conf.sample_rate + conf.offset
+
+    if conf.realtime:
+        tnow = b[1]/conf.sample_rate
+        cycle_num = int(n.floor((tnow-conf.t0)/conf.cycle_len)-1)
+        n_cycles=cycle_num+1
+    else:
+        cycle_num = conf.cycle_num
+        n_cycles = conf.n_cycles        
+        
 
     if conf.xc:
         for i in range(conf.n_cycles):
             calculate_sweep_xc(conf,d,i0+i*conf.cycle_len*conf.sample_rate)
-    
-    
+        
     if len(conf.ch)>1:
         amps,phases=phase_channels(conf,d,i0)
         # debug phasing
         #phase_channels(conf,d,i0,cphases=phases,camps=amps,use_cphases=True)    
     
-    for i in range(conf.cycle_num,conf.n_cycles):
+    for i in range(cycle_num,n_cycles):
+        start_idx=i0+i*conf.cycle_len*conf.sample_rate
+        if start_idx > b[1]:
+            print("data not available. quitting")
+            exit(0)
+        print("cycle number %d"%(i))
         if len(conf.ch)>1:
-            calculate_sweep(conf,d,i0+i*conf.cycle_len*conf.sample_rate,use_cphases=True,cphases=phases,camps=amps)
+            calculate_sweep(conf,d,start_idx,use_cphases=True,cphases=phases,camps=amps)
         else:
-            calculate_sweep(conf,d,i0+i*conf.cycle_len*conf.sample_rate,use_cphases=False)
+            calculate_sweep(conf,d,start_idx,use_cphases=False)

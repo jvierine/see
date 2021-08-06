@@ -27,17 +27,19 @@ class see_config:
                      "n_avg":'"1"',
                      "debug":"false",
                      "debug_timing":"false",
+                     "overwrite":"false",                     
                      "show_plot":"true",
                      "plot_carrier_pwr":"false",                     
                      "fmin":"-5e3",
                      "prefix":'"wb"',
                      "nsubsteps":"1",
-                     "vmin":"-3",
+                     "vmin":"-16",
                      "vmax":"60.0",
                      "n_cycles":"1",
                      "cycle_len":"1800.0",                     
                      "trim_end":"0",
                      "xc":"false",
+                     "realtime":"false",
                      "fmax":"5e3"}
 
         if fname != None:
@@ -68,6 +70,8 @@ class see_config:
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
+        self.realtime=bool(json.loads(c["config"]["realtime"]))
+        self.overwrite=bool(json.loads(c["config"]["overwrite"]))                
         self.xc=bool(json.loads(c["config"]["xc"]))        
         self.debug=bool(json.loads(c["config"]["debug"]))
         self.plot_carrier_pwr=bool(json.loads(c["config"]["plot_carrier_pwr"]))        
