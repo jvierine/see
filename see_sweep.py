@@ -110,7 +110,110 @@ def phase_channels(conf,d,i0,carrier_width=10.0,cphases=None,camps=None,use_cpha
     # pha - phb = mab
     # pha - phc = 
     return(1.0/n.sqrt(ch_pwrs),phases)
+
+def timed_spectra(conf,d):
+    ts=[]
+    fs=[]
+    dts=[]    
+    
+    try:
+        f=open(conf.timing_file,"r")
+        for l in f.readlines():
+            triplet=l.split(",")
+            print("heating pulse %s"%(l.strip()))
+            ts.append(float(triplet[0]))
+            fs.append(float(triplet[1]))
+            dts.append(float(triplet[2]))                        
+    except:
+        print("couldn't open file %s"%(conf.timing_file))
+        exit(0)
+    ts=n.array(ts)
+    fs=n.array(fs)
+    dts=n.array(dts)
+
+    n_pulses=len(ts)
+    print("found %d heating pulses in CSV file %s"%(len(ts),conf.timing_file))
+
+
+    fvec=n.fft.fftshift(n.fft.fftfreq(conf.nfft,d=1.0/conf.sample_rate))
+    fidx=n.where( (fvec>conf.fmin)&(fvec<conf.fmax))[0]
+    fvec2=fvec[fidx]
+    wfun=s.chebwin(conf.nfft,150)
+    t=n.arange(conf.nfft)/conf.sample_rate
+
+    sample_step=conf.nfft/conf.overlap_fraction
+
+    S = []
+    t0v = []
+    f0v = []
+    
+    for pi in range(n_pulses):
+        print("processing heating pulse %d/%d"%(pi,n_pulses))
+        
+        # how much do we shift frequency 
+        fshift = conf.center_freq-fs[pi]*1e6
+        dshift=n.exp(1j*2.0*n.pi*fshift*t)
+
+        n_spectra=int(n.round(dts[pi]/conf.time_resolution))
+        n_ffts_per_spectra = int(n.floor( (conf.time_resolution*conf.sample_rate - conf.offset - conf.nfft) /sample_step))
+        print(n_ffts_per_spectra)
+        
+        S0 = n.zeros([n_spectra,len(fidx)])
+        
+        for ch in conf.ch:
+            for ti in range(n_spectra):
+                f0v.append(fs[pi])
+                t0v.append(ts[pi]+conf.time_resolution*ti)
+
+                if conf.debug_timing:
+                    z=d.read_vector_c81d(int(ts[pi]*conf.sample_rate),10000,ch)
+                    plt.plot(z.real)
+                    plt.plot(z.imag)
+                    plt.show()
                 
+                for ffti in range(n_ffts_per_spectra):
+                    z=d.read_vector_c81d(int(ts[pi]*conf.sample_rate)+int(ti*conf.time_resolution*conf.sample_rate)
+                                         +ffti*sample_step+conf.offset, conf.nfft, ch)*dshift
+
+                                           
+                    spec=n.abs(n.fft.fftshift(n.fft.fft(wfun*z)))**2.0
+                    S0[ti,:] += spec[fidx]
+        S0=S0/float(n_ffts_per_spectra)
+        S.append(S0)
+
+        if False:
+            S2=n.vstack(S)
+            dB=10.0*n.log10(S2)
+            nfloor=n.nanmedian(dB)
+            dB=dB-nfloor
+            t0v2=n.array(t0v)
+            plt.pcolormesh(t0v2-t0v2[0],fvec2/1e3,n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax)
+            plt.xlabel("Time since %s(seconds)"%(stuffr.unix2datestr(t0v2[0])))
+            plt.ylabel("Frequency offset (kHz)")
+            cb=plt.colorbar()
+            cb.set_label("Power relative to noise floor (dB)")
+            plt.show()
+
+
+    S2=n.vstack(S)
+    dB=10.0*n.log10(S2)
+    nfloor=n.nanmedian(dB)
+    dB=dB-nfloor
+    t0v2=n.array(t0v)
+    plt.pcolormesh(t0v2-t0v2[0],fvec2/1e3,n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax)
+    plt.xlabel("Time since %s(seconds)"%(stuffr.unix2datestr(t0v2[0])))
+    plt.ylabel("Frequency offset (kHz)")
+    cb=plt.colorbar()
+    cb.set_label("Power relative to noise floor (dB)")
+    plt.show()
+        
+    
+
+#        plt.pcolormesh(10.0*n.log10(S0))
+ #       plt.colorbar()
+  #      plt.show()
+#    S=n.zeros([conf.nsteps*conf.nsubsteps,n_freq])
+#    N_avgd=n.zeros([conf.nsteps*conf.nsubsteps,n_freq])    
     
         
 def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
@@ -307,8 +410,14 @@ if __name__ == "__main__":
     print(chs)
     print("Data extent:")
     b=d.get_bounds(chs[0])
-    print("%s-%s"%(stuffr.unix2datestr(b[0]/conf.sample_rate),stuffr.unix2datestr(b[1]/conf.sample_rate)))
+    print("%s to %s"%(stuffr.unix2datestr(b[0]/conf.sample_rate),stuffr.unix2datestr(b[1]/conf.sample_rate)))
 
+
+    if conf.use_timing_file:
+        timed_spectra(conf,d)
+        print("done")
+        exit(0)
+    
     if conf.debug_timing:
         debug_start(conf,d)
 

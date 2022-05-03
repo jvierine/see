@@ -24,6 +24,9 @@ class see_config:
                      "cycle_num":"0",                     
                      "fscale":'"Hz"',
                      "fast":"false",
+                     "use_timing_file":"false",
+                     "timing_file":"none",
+                     "time_resolution":"1.0",                                                               
                      "n_avg":'"1"',
                      "debug":"false",
                      "debug_timing":"false",
@@ -70,6 +73,11 @@ class see_config:
         self.fstep=float(json.loads(c["config"]["fstep"]))
         self.fscale=json.loads(c["config"]["fscale"])
         self.fast=bool(json.loads(c["config"]["fast"]))
+
+        self.use_timing_file=bool(json.loads(c["config"]["use_timing_file"]))
+        self.timing_file=json.loads(c["config"]["timing_file"])
+        self.time_resolution=float(json.loads(c["config"]["time_resolution"]))
+        
         self.realtime=bool(json.loads(c["config"]["realtime"]))
         self.overwrite=bool(json.loads(c["config"]["overwrite"]))                
         self.xc=bool(json.loads(c["config"]["xc"]))        
