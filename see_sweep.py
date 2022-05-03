@@ -148,7 +148,7 @@ def timed_spectra(conf,d):
     f0v = []
     
     for pi in range(n_pulses):
-        print("processing heating pulse %d/%d"%(pi,n_pulses))
+        
         
         # how much do we shift frequency 
         fshift = conf.center_freq-fs[pi]*1e6
@@ -156,7 +156,8 @@ def timed_spectra(conf,d):
 
         n_spectra=int(n.round(dts[pi]/conf.time_resolution))
         n_ffts_per_spectra = int(n.floor( (conf.time_resolution*conf.sample_rate - conf.offset - conf.nfft) /sample_step))
-        print(n_ffts_per_spectra)
+        
+        print("processing heating pulse %d/%d f0 %1.2f (MHz) dt %1.2f (s) nffts per time step %d"%(pi,n_pulses,fs[pi],dts[pi],n_ffts_per_spectra))
         
         S0 = n.zeros([n_spectra,len(fidx)])
         
@@ -195,16 +196,45 @@ def timed_spectra(conf,d):
             plt.show()
 
 
+
+            
+
     S2=n.vstack(S)
+    t0v2=n.array(t0v)
+    f0v=n.array(f0v)
+    
+    ofname="img/%s_sweep_%1.2f.h5"%(conf.prefix,t0v2[0])
+    
+    print("Saving %s"%(ofname))
+    ho=h5py.File(ofname,"w")
+    ho["S"]=S2
+#    ho["phases"]=cphases
+ #   ho["amps"]=camps
+    ho["time_vec"]=t0v2-t0v2[0]
+    ho["freq_vec"]=fvec2
+    ho["f0s"]=f0v
+#    ho["carrier_pwr"]=carrier
+    ho["center_freq"]=conf.center_freq
+    ho["fscale"]=str(conf.fscale)
+    ho["t0"]=t0v2[0]
+    ho["date"]=stuffr.unix2datestr(t0v2[0])
+    ho.close()
+    
+
+    
     dB=10.0*n.log10(S2)
     nfloor=n.nanmedian(dB)
     dB=dB-nfloor
-    t0v2=n.array(t0v)
+    plt.figure(figsize=(8*1.5,6*1.5))
     plt.pcolormesh(t0v2-t0v2[0],fvec2/1e3,n.transpose(dB),vmin=conf.vmin,vmax=conf.vmax)
     plt.xlabel("Time since %s(seconds)"%(stuffr.unix2datestr(t0v2[0])))
     plt.ylabel("Frequency offset (kHz)")
     cb=plt.colorbar()
     cb.set_label("Power relative to noise floor (dB)")
+    plt.tight_layout()
+    plt.savefig("img/%s_%f.png"%(conf.prefix,t0v2[0]))
+    plt.clf()
+    plt.close()
     plt.show()
         
     
