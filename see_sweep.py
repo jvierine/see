@@ -212,7 +212,7 @@ def timed_spectra(conf,d):
  #   ho["amps"]=camps
     ho["time_vec"]=t0v2-t0v2[0]
     ho["freq_vec"]=fvec2
-    ho["f0s"]=f0v
+    ho["f0s"]=f0v*1e6
 #    ho["carrier_pwr"]=carrier
     ho["center_freq"]=conf.center_freq
     ho["fscale"]=str(conf.fscale)
