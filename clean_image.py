@@ -35,23 +35,23 @@ def t2(x,sigma,alpha=2.0):
 
 def plot_file(fname,show_plot=False,clean_plot=False,vmin=-6,vmax=50.0):
     h=h5py.File(fname,"r+")
-    I=h["S"].value
-    fscale=h["fscale"].value    
+    I=h["S"][()]
+    fscale=h["fscale"][()]
 
     dB=10.0*n.log10(I)
     dB=dB-n.nanmedian(10.0*n.log10(I[I>0]))
     fig=plt.figure(figsize=(8*1.5,6*1.5))
     ax1 = fig.add_subplot(111)
-    #plt.title("%s"%(stuffr.unix2datestr(h["t0"].value)),y=1.06)
+    #plt.title("%s"%(stuffr.unix2datestr(h["t0"][()])),y=1.06)
 
 
-    freq_p=n.copy(h["freq_vec"].value)
+    freq_p=n.copy(h["freq_vec"][()])
     if fscale == "kHz":
         freq_p=freq_p/1e3
 
-    tvec=h["time_vec"].value
+    tvec=h["time_vec"][()]
     dBT=n.transpose(dB)
-    plt.title("%s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(h["t0"].value),n.min(h["f0s"].value)/1e6),y=1.06)
+    plt.title("%s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(h["t0"][()]),n.min(h["f0s"][()])/1e6),y=1.06)
         
     cm=ax1.pcolormesh(tvec,freq_p,dBT,vmin=vmin,vmax=vmax,cmap="plasma")
     ax1.set_xlabel("Time (s)")
@@ -62,17 +62,20 @@ def plot_file(fname,show_plot=False,clean_plot=False,vmin=-6,vmax=50.0):
     ax1.set_ylim([n.min(freq_p),n.max(freq_p)])
     ax1.set_xlim([n.min(tvec),n.max(tvec)])    
 
-    if n.max(h["f0s"].value)-n.min(h["f0s"].value) > 10.0:
+    if n.max(h["f0s"][()])-n.min(h["f0s"][()]) > 10.0:
         ax2 = ax1.twiny()    
-        ax2.plot(h["f0s"].value/1e6, n.ones(len(h["f0s"].value)),alpha=0)
+        ax2.plot(h["f0s"][()]/1e6, n.ones(len(h["f0s"][()])),alpha=0)
         ax2.set_xlabel("Heating frequency (MHz)")
         ax2.set_ylim([n.min(freq_p),n.max(freq_p)])
-        ax2.set_xlim([n.min(h["f0s"].value/1e6),n.max(h["f0s"].value/1e6)])
+        ax2.set_xlim([n.min(h["f0s"][()]/1e6),n.max(h["f0s"][()]/1e6)])
 
     plt.tight_layout()
     imgfname="%s.png"%(fname)
     plt.savefig(imgfname)
     os.system("cp %s /tmp/0latest.png"%(imgfname))
+    os.system("rsync -av --progress /tmp/0latest.png j@soppel.org:/var/www/soppel.org/see/")
+    os.system("rsync -av --progress img/*.png j@soppel.org:/var/www/soppel.org/see/")
+
     if show_plot:
         plt.show()
     plt.clf()
@@ -109,22 +112,22 @@ def plot_file(fname,show_plot=False,clean_plot=False,vmin=-6,vmax=50.0):
 
         fig=plt.figure(figsize=(8*1.5,6*1.5))
         ax1 = fig.add_subplot(111)
-        plt.title("%s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(h["t0"].value),n.min(h["f0s"].value)/1e6),y=1.06)
-        cm=ax1.pcolormesh(h["time_vec"].value,freq_p,n.transpose(dBc),vmin=vmin,vmax=vmax,cmap="plasma")
+        plt.title("%s $f_0=%1.2f$ (MHz)"%(stuffr.unix2datestr(h["t0"][()]),n.min(h["f0s"][()])/1e6),y=1.06)
+        cm=ax1.pcolormesh(h["time_vec"][()],freq_p,n.transpose(dBc),vmin=vmin,vmax=vmax,cmap="plasma")
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Frequency offset (%s)"%(fscale))
         ax1.set_xlim([n.min(tvec),n.max(tvec)])            
         cb=fig.colorbar(cm,ax=ax1)
         cb.set_label("dB")
         ax1.set_ylim([n.min(freq_p),n.max(freq_p)])
-        print(h["f0s"].value)
-        if n.max(h["f0s"].value)-n.min(h["f0s"].value) > 10.0:
+        print(h["f0s"][()])
+        if n.max(h["f0s"][()])-n.min(h["f0s"][()]) > 10.0:
             ax2 = ax1.twiny()    
-            print(h["f0s"].value)
-            ax2.plot(h["f0s"].value/1e6, n.ones(len(h["f0s"].value)),alpha=0)
+            print(h["f0s"][()])
+            ax2.plot(h["f0s"][()]/1e6, n.ones(len(h["f0s"][()])),alpha=0)
             ax2.set_xlabel("Heating frequency (MHz)")
             ax2.set_ylim([n.min(freq_p),n.max(freq_p)])
-            ax2.set_xlim([n.min(h["f0s"].value/1e6),n.max(h["f0s"].value/1e6)])
+            ax2.set_xlim([n.min(h["f0s"][()]/1e6),n.max(h["f0s"][()]/1e6)])
 
         plt.tight_layout()
         
