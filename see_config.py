@@ -75,7 +75,11 @@ class see_config:
         self.fast=bool(json.loads(c["config"]["fast"]))
 
         self.use_timing_file=bool(json.loads(c["config"]["use_timing_file"]))
-        self.timing_file=json.loads(c["config"]["timing_file"])
+        try:
+            self.timing_file=json.loads(c["config"]["timing_file"])
+        except:
+            self.timing_file="none"
+            
         self.time_resolution=float(json.loads(c["config"]["time_resolution"]))
         
         self.realtime=bool(json.loads(c["config"]["realtime"]))
