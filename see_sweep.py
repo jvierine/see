@@ -339,7 +339,7 @@ def calculate_sweep(conf,d,i0,use_cphases=False,cphases=None,camps=None):
     ho["date"]=stuffr.unix2datestr(i0/conf.sample_rate)
     ho.close()
 
-    clean_image.plot_file(ofname,show_plot=conf.show_plot,vmin=conf.vmin,vmax=conf.vmax)
+    clean_image.plot_file(ofname,show_plot=conf.show_plot,vmin=conf.vmin,vmax=conf.vmax,rsync=conf.realtime)
         
 def calculate_sweep_xc(conf,d,i0,use_cphases=False,cphases=None,camps=None):
 

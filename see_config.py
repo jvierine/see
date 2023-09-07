@@ -80,7 +80,8 @@ class see_config:
         try:
             self.timing_file=json.loads(c["config"]["timing_file"])
         except:
-            print("wtf?")
+            self.timing_file="none"
+            
         self.time_resolution=float(json.loads(c["config"]["time_resolution"]))
         
         self.realtime=bool(json.loads(c["config"]["realtime"]))
